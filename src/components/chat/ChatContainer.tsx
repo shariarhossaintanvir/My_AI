@@ -14,6 +14,7 @@ import {
 } from '@/types';
 import { StorageRepository } from '@/lib/storage/repository';
 import { DEFAULT_USER_SETTINGS } from '@/lib/storage/indexeddb';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Sidebar } from '../sidebar/Sidebar';
 import { MessageList } from './MessageList';
 import { ChatComposer } from '../composer/ChatComposer';
@@ -228,9 +229,25 @@ export const ChatContainer: React.FC = () => {
 
     try {
       // 3. Dispatch stream request to Route Handler
+      const requestHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            requestHeaders['Authorization'] = `Bearer ${session.access_token}`;
+          }
+        } catch {
+          // ignore session retrieval error
+        }
+      }
+
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: requestHeaders,
         body: JSON.stringify({
           conversationId: targetConvId,
           messages: nextMessages.map((m) => ({

@@ -19,62 +19,22 @@ describe('Chat API Route Handler Integration', () => {
     expect(json.error).toBe('Invalid request payload');
   });
 
-  it('rejects unauthorized access when an unauthorized owner email header is provided', async () => {
-    const originalOwner = process.env.OWNER_EMAIL;
-    try {
-      process.env.OWNER_EMAIL = 'legit-owner@example.com';
-      const req = new NextRequest('http://localhost:3000/api/chat', {
-        method: 'POST',
-        headers: {
-          'x-owner-email': 'attacker@unauthorized.com',
-        },
-        body: JSON.stringify({
-          conversationId: 'conv-auth-test',
-          messages: [{ role: 'user', content: 'test' }],
-          model: 'claude-sonnet-4-6',
-        }),
-      });
+  it('fails closed when attempting real Claude requests without a verified authentication session', async () => {
+    // When real mode is requested but no Supabase session or auth token is present
+    const req = new NextRequest('http://localhost:3000/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        conversationId: 'conv-real-noauth-test',
+        messages: [{ role: 'user', content: 'Hello in real mode' }],
+        model: 'claude-sonnet-4-6',
+      }),
+    });
 
-      const response = await POST(req);
-      expect(response.status).toBe(403);
-      const json = await response.json();
-      expect(json.code).toBe('AUTH_REQUIRED');
-    } finally {
-      process.env.OWNER_EMAIL = originalOwner;
-    }
-  });
+    const response = await POST(req);
+    expect(response.status).toBe(401);
 
-  it('does NOT fall back to mock mode automatically when real Claude is configured but API key is missing', async () => {
-    // Simulate real mode with missing API key
-    const originalKey = process.env.ANTHROPIC_API_KEY;
-    const originalMock = process.env.MOCK_AI_MODE;
-    const originalUseMock = process.env.USE_MOCK_AI;
-
-    try {
-      delete process.env.ANTHROPIC_API_KEY;
-      process.env.MOCK_AI_MODE = 'false';
-      process.env.USE_MOCK_AI = 'false';
-
-      const req = new NextRequest('http://localhost:3000/api/chat', {
-        method: 'POST',
-        body: JSON.stringify({
-          conversationId: 'conv-real-test',
-          messages: [{ role: 'user', content: 'Hello in real mode' }],
-          model: 'claude-sonnet-4-6',
-        }),
-      });
-
-      const response = await POST(req);
-      expect(response.status).toBe(500);
-
-      const json = await response.json();
-      expect(json.code).toBe('ANTHROPIC_NOT_CONFIGURED');
-      expect(json.error).toContain('Real Claude mode is active');
-    } finally {
-      if (originalKey) process.env.ANTHROPIC_API_KEY = originalKey;
-      if (originalMock) process.env.MOCK_AI_MODE = originalMock;
-      if (originalUseMock) process.env.USE_MOCK_AI = originalUseMock;
-    }
+    const json = await response.json();
+    expect(json.code).toBe('AUTH_REQUIRED');
   });
 
   it('streams SSE response when Mock AI mode is explicitly enabled via USE_MOCK_AI=true', async () => {

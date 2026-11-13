@@ -74,14 +74,12 @@ export function validateAttachmentFile(file: File): FileValidationResult {
 
 /**
  * Checks whether an authenticated email matches the designated application owner email.
+ * Never trusts unconfigured environments or falsy inputs.
  */
 export function isAuthorizedOwner(email?: string | null): boolean {
   const ownerEmail = process.env.OWNER_EMAIL?.trim().toLowerCase();
-  if (!ownerEmail) {
-    // If OWNER_EMAIL is not explicitly set in environment, allow authenticated access in local development
-    return process.env.NODE_ENV !== 'production';
+  if (!ownerEmail || !email) {
+    return false;
   }
-  if (!email) return false;
   return email.trim().toLowerCase() === ownerEmail;
 }
-

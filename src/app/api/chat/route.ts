@@ -14,23 +14,8 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify authorization to protect the endpoint from unauthorized or anonymous abuse
-    const authResult = await verifyChatEndpointAuthorization(req);
-    if (!authResult.authorized) {
-      return new Response(
-        JSON.stringify({
-          error: authResult.error || 'Unauthorized',
-          code: 'AUTH_REQUIRED',
-        }),
-        {
-          status: authResult.status,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // 2. Parse and validate request body
-    const body = await req.json();
+    // 1. Parse and validate request body
+    const body = await req.json().catch(() => null);
     const parseResult = ChatApiRequestSchema.safeParse(body);
 
     if (!parseResult.success) {
@@ -45,7 +30,25 @@ export async function POST(req: NextRequest) {
 
     const { messages, model, systemInstructions, temperature, maxTokens, mock } = parseResult.data;
 
-    // 3. Prepare context
+    // 2. Determine if Mock AI Mode is explicitly requested (never enabled in production)
+    const isMock = isMockModeActive({ explicitMock: mock });
+
+    // 3. Verify authentication and authorization (fails closed for real Claude without verified owner)
+    const authResult = await verifyChatEndpointAuthorization(req, isMock);
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({
+          error: authResult.error || 'Unauthorized',
+          code: authResult.code || 'AUTH_REQUIRED',
+        }),
+        {
+          status: authResult.status,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // 4. Prepare context
     const preparedContext = buildAnthropicContext({
       messages,
       systemInstructions,
@@ -53,9 +56,7 @@ export async function POST(req: NextRequest) {
 
     const encoder = new TextEncoder();
 
-    // 4. Check whether Mock AI Mode is explicitly requested
-    const isMock = isMockModeActive({ explicitMock: mock });
-
+    // 5. Explicit Development Mock Mode (Simulated responses, zero API cost)
     if (isMock) {
       const lastUserMsg = messages[messages.length - 1];
       const mockStream = createMockStream({
@@ -108,12 +109,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 5. Real Claude Mode (No automatic mock fallback)
+    // 6. Real Claude Mode (Protected & Verified)
     if (!isAnthropicConfigured()) {
       return new Response(
         JSON.stringify({
           error:
-            'Anthropic Claude API is not configured. Real Claude mode is active. Please configure ANTHROPIC_API_KEY in .env.local, or explicitly set MOCK_AI_MODE=true or USE_MOCK_AI=true for local mock testing.',
+            'Anthropic Claude API is not configured. Real Claude mode is active. Please configure ANTHROPIC_API_KEY in .env.local, or explicitly set USE_MOCK_AI=true for local mock testing.',
           code: 'ANTHROPIC_NOT_CONFIGURED',
         }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -195,7 +196,6 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Chat API Error:', error);
 
-    // Format descriptive error message without leaking sensitive credentials
     let errorMessage = 'An unexpected server error occurred.';
     let statusCode = 500;
 
