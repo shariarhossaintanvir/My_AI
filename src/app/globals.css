@@ -104,9 +104,17 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.markdown-body h1 { font-size: 1.35rem; }
-.markdown-body h2 { font-size: 1.2rem; }
-.markdown-body h3 { font-size: 1.05rem; }
+.markdown-body h1 {
+  font-size: 1.35rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.2rem;
+}
+
+.markdown-body h3 {
+  font-size: 1.05rem;
+}
 
 .markdown-body ul,
 .markdown-body ol {
@@ -154,8 +162,15 @@ body {
 
 /* Streaming blinking cursor */
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 .streaming-cursor {

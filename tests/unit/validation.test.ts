@@ -16,7 +16,7 @@ describe('Schema Validation Tests', () => {
           content: 'Hello, how can you help me?',
         },
       ],
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-6',
       temperature: 0.7,
       maxTokens: 4096,
     };
@@ -49,7 +49,7 @@ describe('Schema Validation Tests', () => {
   it('validates and applies defaults for UserSettingsSchema', () => {
     const parsed = UserSettingsSchema.parse({});
     expect(parsed.theme).toBe('system');
-    expect(parsed.preferredModel).toBe('claude-3-5-sonnet-20241022');
+    expect(parsed.preferredModel).toBe('claude-sonnet-4-6');
     expect(parsed.temperature).toBe(0.7);
     expect(parsed.sendOnEnter).toBe(true);
   });
@@ -87,3 +87,4 @@ describe('Schema Validation Tests', () => {
     expect(ConversationRenameSchema.safeParse({ title: '   ' }).success).toBe(false);
   });
 });
+

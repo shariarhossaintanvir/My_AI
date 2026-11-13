@@ -42,3 +42,4 @@ Configured in `next.config.mjs`:
 - `X-XSS-Protection: 1; mode=block`: Legacy browser XSS filter.
 - `Referrer-Policy: strict-origin-when-cross-origin`: Mitigates URL parameter leakage.
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()`: Disables unneeded hardware APIs.
+

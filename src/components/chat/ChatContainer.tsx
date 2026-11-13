@@ -10,6 +10,7 @@ import {
   UserSettings,
   UsageLog,
   SUPPORTED_MODELS,
+  formatModelDisplayName,
 } from '@/types';
 import { StorageRepository } from '@/lib/storage/repository';
 import { DEFAULT_USER_SETTINGS } from '@/lib/storage/indexeddb';
@@ -453,7 +454,7 @@ export const ChatContainer: React.FC = () => {
                 {activeConversation?.title || 'My AI'}
               </span>
               <span className="hidden sm:inline-block text-[11px] font-mono text-[#71717A] px-2 py-0.5 rounded bg-[#1D2027] border border-[#30333B]">
-                {settings.preferredModel.replace('claude-', '').replace('sonnet-', 'Sonnet ').replace('haiku-', 'Haiku ')}
+                {formatModelDisplayName(settings.preferredModel)}
               </span>
             </div>
           </div>

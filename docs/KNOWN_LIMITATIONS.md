@@ -23,3 +23,4 @@
 ## 2. External Credentials Pending Verification
 - **Anthropic Claude API Key**: When running locally without `ANTHROPIC_API_KEY`, the application activates the Mock AI Provider. Live streaming inference with Claude requires setting `ANTHROPIC_API_KEY` in `.env.local`.
 - **Supabase Cloud Persistence**: In local mode without remote Supabase credentials, the application automatically uses client-side IndexedDB for complete persistence. Remote synchronization requires setting `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+

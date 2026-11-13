@@ -65,7 +65,7 @@ export class StorageRepository {
   /**
    * Creates a new conversation and persists it.
    */
-  static async createConversation(title: string, model: string = 'claude-3-5-sonnet-20241022'): Promise<Conversation> {
+  static async createConversation(title: string, model: string = 'claude-sonnet-4-6'): Promise<Conversation> {
     const newConv: Conversation = {
       id: crypto.randomUUID(),
       title,
@@ -318,3 +318,4 @@ export class StorageRepository {
     }
   }
 }
+

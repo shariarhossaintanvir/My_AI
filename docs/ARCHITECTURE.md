@@ -80,3 +80,4 @@ Key design principles:
 - Messages are ordered strictly by sequence number.
 - Anthropic requires alternating `user` and `assistant` turns starting with `user`. `buildAnthropicContext` normalizes consecutive user messages, injects system prompts, and converts attachments into Claude-compatible blocks.
 - Truncation strategy: When editing an earlier prompt, subsequent turns are pruned locally and remotely to prevent conversation state corruption.
+

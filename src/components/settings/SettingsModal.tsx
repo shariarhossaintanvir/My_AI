@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UserSettings, UsageLog, SUPPORTED_MODELS, ClaudeModelId, Theme } from '@/types';
+import { UserSettings, UsageLog, SUPPORTED_MODELS, ClaudeModelId, Theme, formatModelDisplayName } from '@/types';
 import { X, Moon, Sun, Laptop, Cpu, Sliders, BarChart3, ShieldCheck, Trash2, LogOut } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -77,11 +77,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('general')}
-            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'general'
+            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'general'
                 ? 'border-[#FF8A45] text-[#FF8A45]'
                 : 'border-transparent text-[#A1A1AA] hover:text-[#F5F5F5]'
-            }`}
+              }`}
           >
             <Sliders className="w-3.5 h-3.5" />
             <span>General</span>
@@ -89,11 +88,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('model')}
-            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'model'
+            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'model'
                 ? 'border-[#FF8A45] text-[#FF8A45]'
                 : 'border-transparent text-[#A1A1AA] hover:text-[#F5F5F5]'
-            }`}
+              }`}
           >
             <Cpu className="w-3.5 h-3.5" />
             <span>Model & Prompt</span>
@@ -101,11 +99,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('usage')}
-            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'usage'
+            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'usage'
                 ? 'border-[#FF8A45] text-[#FF8A45]'
                 : 'border-transparent text-[#A1A1AA] hover:text-[#F5F5F5]'
-            }`}
+              }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
             <span>Usage</span>
@@ -113,11 +110,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('security')}
-            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === 'security'
+            className={`py-3 flex items-center gap-2 border-b-2 transition-colors ${activeTab === 'security'
                 ? 'border-[#FF8A45] text-[#FF8A45]'
                 : 'border-transparent text-[#A1A1AA] hover:text-[#F5F5F5]'
-            }`}
+              }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Security</span>
@@ -140,11 +136,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       key={t}
                       type="button"
                       onClick={() => handleSave({ theme: t })}
-                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-medium capitalize transition-all ${
-                        currentSettings.theme === t
+                      className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-medium capitalize transition-all ${currentSettings.theme === t
                           ? 'border-[#FF8A45] bg-[#FF8A45]/10 text-[#FF8A45]'
                           : 'border-[#30333B] dark:border-[#30333B] light:border-[#E2E4E8] bg-[#1D2027] dark:bg-[#1D2027] light:bg-[#F9FAFB] text-[#A1A1AA] hover:text-[#F5F5F5]'
-                      }`}
+                        }`}
                     >
                       {t === 'dark' && <Moon className="w-3.5 h-3.5" />}
                       {t === 'light' && <Sun className="w-3.5 h-3.5" />}
@@ -189,11 +184,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       key={m.id}
                       type="button"
                       onClick={() => handleSave({ preferredModel: m.id as ClaudeModelId })}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left text-xs transition-all ${
-                        currentSettings.preferredModel === m.id
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border text-left text-xs transition-all ${currentSettings.preferredModel === m.id
                           ? 'border-[#FF8A45] bg-[#FF8A45]/10 text-[#F5F5F5]'
                           : 'border-[#30333B] dark:border-[#30333B] light:border-[#E2E4E8] bg-[#1D2027] text-[#A1A1AA] hover:bg-[#252932]'
-                      }`}
+                        }`}
                     >
                       <div>
                         <div className="flex items-center gap-2">
@@ -317,17 +311,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </td>
                             <td className="p-2.5 text-[#D1D5DB] truncate max-w-[140px]">
-                              {log.model.replace('claude-', '')}
+                              {formatModelDisplayName(log.model)}
                             </td>
                             <td className="p-2.5 text-right text-[#FF8A45]">
                               {log.totalTokens.toLocaleString()}
                             </td>
                             <td className="p-2.5 text-right">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                                log.status === 'success'
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] ${log.status === 'success'
                                   ? 'bg-emerald-950/40 text-emerald-400'
                                   : 'bg-red-950/40 text-red-400'
-                              }`}>
+                                }`}>
                                 {log.status}
                               </span>
                             </td>
@@ -437,3 +430,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     </div>
   );
 };
+

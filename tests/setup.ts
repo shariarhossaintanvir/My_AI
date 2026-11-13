@@ -8,10 +8,10 @@ if (typeof window !== 'undefined') {
       matches: false,
       media: query,
       onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
+      addListener: () => { },
+      removeListener: () => { },
+      addEventListener: () => { },
+      removeEventListener: () => { },
       dispatchEvent: () => false,
     }),
   });
@@ -25,3 +25,4 @@ if (!globalThis.crypto?.randomUUID) {
     },
   });
 }
+

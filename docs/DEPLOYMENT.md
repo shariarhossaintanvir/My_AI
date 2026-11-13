@@ -55,3 +55,4 @@ git push -u origin main
 - [ ] Conversations persist across browser reloads.
 - [ ] Switching themes (Dark, Light, System) applies instantaneously.
 - [ ] Usage tracking records token counts in settings.
+

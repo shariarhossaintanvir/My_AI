@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+export const SUPPORTED_MODEL_IDS = [
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
+  'claude-haiku-4-5',
+] as const;
+
+export const DEFAULT_MODEL_ID = 'claude-sonnet-4-6';
+
 export const AttachmentSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(255),
@@ -21,28 +29,19 @@ export const ChatApiRequestSchema = z.object({
   conversationId: z.string().min(1),
   messages: z.array(ChatMessageInputSchema).min(1),
   model: z
-    .enum([
-      'claude-3-7-sonnet-20250219',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-5-haiku-20241022',
-      'claude-3-opus-20240229',
-    ])
-    .default('claude-3-5-sonnet-20241022'),
+    .enum(SUPPORTED_MODEL_IDS)
+    .default(DEFAULT_MODEL_ID),
   systemInstructions: z.string().max(10000).optional(),
   temperature: z.number().min(0).max(1).optional().default(0.7),
   maxTokens: z.number().int().min(256).max(8192).optional().default(4096),
+  mock: z.boolean().optional(),
 });
 
 export const UserSettingsSchema = z.object({
   theme: z.enum(['dark', 'light', 'system']).default('system'),
   preferredModel: z
-    .enum([
-      'claude-3-7-sonnet-20250219',
-      'claude-3-5-sonnet-20241022',
-      'claude-3-5-haiku-20241022',
-      'claude-3-opus-20240229',
-    ])
-    .default('claude-3-5-sonnet-20241022'),
+    .enum(SUPPORTED_MODEL_IDS)
+    .default(DEFAULT_MODEL_ID),
   systemInstructions: z.string().max(5000).default(''),
   temperature: z.number().min(0).max(1).default(0.7),
   maxOutputTokens: z.number().int().min(256).max(8192).default(4096),
@@ -51,7 +50,7 @@ export const UserSettingsSchema = z.object({
 
 export const ConversationCreateSchema = z.object({
   title: z.string().min(1).max(120).default('New Conversation'),
-  model: z.string().min(1).default('claude-3-5-sonnet-20241022'),
+  model: z.string().min(1).default(DEFAULT_MODEL_ID),
 });
 
 export const ConversationRenameSchema = z.object({

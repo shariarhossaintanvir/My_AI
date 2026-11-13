@@ -5,10 +5,9 @@
 export type Theme = 'dark' | 'light' | 'system';
 
 export type ClaudeModelId =
-  | 'claude-3-7-sonnet-20250219'
-  | 'claude-3-5-sonnet-20241022'
-  | 'claude-3-5-haiku-20241022'
-  | 'claude-3-opus-20240229';
+  | 'claude-sonnet-4-6'
+  | 'claude-opus-4-6'
+  | 'claude-haiku-4-5';
 
 export interface ModelInfo {
   id: ClaudeModelId;
@@ -22,38 +21,47 @@ export interface ModelInfo {
 
 export const SUPPORTED_MODELS: ModelInfo[] = [
   {
-    id: 'claude-3-7-sonnet-20250219',
-    name: 'Claude 3.7 Sonnet',
-    tagline: 'Leading reasoning, coding, and problem solving with hybrid thought',
-    contextWindow: 200000,
-    maxOutputTokens: 8192,
-    badge: 'Latest',
-  },
-  {
-    id: 'claude-3-5-sonnet-20241022',
-    name: 'Claude 3.5 Sonnet',
-    tagline: 'Fast, intelligent, exceptional across code, text, and multimodal tasks',
-    contextWindow: 200000,
+    id: 'claude-sonnet-4-6',
+    name: 'Claude Sonnet 4.6',
+    tagline: 'Leading reasoning, coding, and multimodal intelligence with 1M context',
+    contextWindow: 1000000,
     maxOutputTokens: 8192,
     badge: 'Recommended',
     isDefault: true,
   },
   {
-    id: 'claude-3-5-haiku-20241022',
-    name: 'Claude 3.5 Haiku',
+    id: 'claude-opus-4-6',
+    name: 'Claude Opus 4.6',
+    tagline: 'Deep analytical synthesis, advanced agentic planning, and complex architecture',
+    contextWindow: 1000000,
+    maxOutputTokens: 8192,
+    badge: 'Frontier',
+  },
+  {
+    id: 'claude-haiku-4-5',
+    name: 'Claude Haiku 4.5',
     tagline: 'Ultra-fast, responsive, ideal for rapid conversational queries and quick edits',
     contextWindow: 200000,
     maxOutputTokens: 4096,
     badge: 'Fast',
   },
-  {
-    id: 'claude-3-opus-20240229',
-    name: 'Claude 3 Opus',
-    tagline: 'In-depth analysis, comprehensive synthesis, and nuanced long-form writing',
-    contextWindow: 200000,
-    maxOutputTokens: 4096,
-  },
 ];
+
+export function formatModelDisplayName(modelId?: string): string {
+  if (!modelId) return 'Sonnet 4.6';
+  switch (modelId) {
+    case 'claude-sonnet-4-6':
+      return 'Sonnet 4.6';
+    case 'claude-opus-4-6':
+      return 'Opus 4.6';
+    case 'claude-haiku-4-5':
+      return 'Haiku 4.5';
+    default:
+      return modelId
+        .replace(/^claude-/, '')
+        .replace(/^(sonnet|opus|haiku)-/, (m) => m.charAt(0).toUpperCase() + m.slice(1, -1) + ' ');
+  }
+}
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 
@@ -130,6 +138,7 @@ export interface ChatApiRequest {
   systemInstructions?: string;
   temperature?: number;
   maxTokens?: number;
+  mock?: boolean;
 }
 
 export type StreamChunk =

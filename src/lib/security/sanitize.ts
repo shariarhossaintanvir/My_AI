@@ -84,3 +84,4 @@ export function isAuthorizedOwner(email?: string | null): boolean {
   if (!email) return false;
   return email.trim().toLowerCase() === ownerEmail;
 }
+

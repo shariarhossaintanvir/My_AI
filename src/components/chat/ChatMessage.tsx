@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Message } from '@/types';
+import { Message, formatModelDisplayName } from '@/types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { AttachmentPreview } from '../attachments/AttachmentPreview';
 import { Copy, Check, RotateCcw, Edit3, Bot, User, AlertCircle } from 'lucide-react';
@@ -76,7 +76,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {/* Timestamps or Model indicator */}
             {message.model && !isUser && (
               <span className="text-[11px] font-mono text-[#71717A] dark:text-[#71717A] light:text-[#9CA3AF]">
-                {message.model.replace('claude-', '').replace('sonnet-', 'Sonnet ').replace('haiku-', 'Haiku ')}
+                {formatModelDisplayName(message.model)}
               </span>
             )}
           </div>
@@ -201,3 +201,4 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     </div>
   );
 };
+

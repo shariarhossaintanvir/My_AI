@@ -16,7 +16,7 @@ const STORES = {
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   theme: 'dark',
-  preferredModel: 'claude-3-5-sonnet-20241022',
+  preferredModel: 'claude-sonnet-4-6',
   systemInstructions: '',
   temperature: 0.7,
   maxOutputTokens: 4096,
@@ -230,3 +230,4 @@ export async function idbAddUsageLog(log: UsageLog): Promise<void> {
     request.onerror = () => reject(request.error);
   });
 }
+

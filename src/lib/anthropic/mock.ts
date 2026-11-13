@@ -27,11 +27,11 @@ export function generateMockContent(prompt: string, attachments?: Attachment[]):
 I have processed your PDF document (**${file.name}**, ${(file.size / 1024).toFixed(1)} KB).
 
 Here is a summary of the key insights:
-- **Document Structure**: Validated PDF format compatible with Claude 3.5 native document input.
+- **Document Structure**: Validated PDF format compatible with Claude native document input.
 - **Content Overview**: The document contains structured information that can be analyzed, summarized, or extracted.
 - **Actionable Next Steps**: You can ask specific questions about sections, request table data extraction, or ask for an executive brief.
 
-*Note: In live mode with your \`ANTHROPIC_API_KEY\` set, Claude 3.5/3.7 performs full contextual OCR and multimodal document comprehension.*`;
+*Note: In live mode with your \`ANTHROPIC_API_KEY\` set, Claude Sonnet 4.6 performs full contextual OCR and multimodal document comprehension.*`;
     }
 
     if (file.type === 'image') {
@@ -133,3 +133,4 @@ export async function* createMockStream(options: MockStreamOptions): AsyncGenera
 
   return { inputTokens, outputTokens };
 }
+

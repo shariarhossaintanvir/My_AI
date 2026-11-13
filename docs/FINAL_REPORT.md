@@ -135,3 +135,4 @@ C:\My AI\
 2. Open [http://localhost:3000](http://localhost:3000) in your browser.
 3. The app is pre-configured to run out-of-the-box in **Mock AI Mode** with zero configuration required.
 4. To enable live Claude responses, copy `.env.example` to `.env.local` and provide your `ANTHROPIC_API_KEY`.
+

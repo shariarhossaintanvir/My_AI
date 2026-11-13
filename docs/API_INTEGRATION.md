@@ -78,3 +78,4 @@ Responses from `/api/chat` are streamed over HTTP using the `text/event-stream` 
 - `data: {"type": "usage", "inputTokens": 140, "outputTokens": 320}`: Token accounting on stream completion.
 - `data: {"type": "done"}`: Marks clean stream termination.
 - `data: {"type": "error", "message": "..."}`: Relays provider rate limits, context overflows, or authentication errors.
+

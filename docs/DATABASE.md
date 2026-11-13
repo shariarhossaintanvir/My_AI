@@ -115,3 +115,4 @@ npx supabase link --project-ref your-project-ref
 npx supabase db push
 ```
 *Note: In accordance with Section 1 of the master prompt, executing migrations against a remote production database requires explicit user approval.*
+

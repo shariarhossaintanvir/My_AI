@@ -4,16 +4,32 @@
 
 import { NextRequest } from 'next/server';
 import { ChatApiRequestSchema } from '@/lib/validation/schemas';
-import { isMockModeActive, getAnthropicClient } from '@/lib/anthropic/client';
+import { isMockModeActive, isAnthropicConfigured, getAnthropicClient } from '@/lib/anthropic/client';
 import { buildAnthropicContext } from '@/lib/anthropic/context';
 import { createMockStream } from '@/lib/anthropic/mock';
+import { verifyChatEndpointAuthorization } from '@/lib/security/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse and validate request body
+    // 1. Verify authorization to protect the endpoint from unauthorized or anonymous abuse
+    const authResult = await verifyChatEndpointAuthorization(req);
+    if (!authResult.authorized) {
+      return new Response(
+        JSON.stringify({
+          error: authResult.error || 'Unauthorized',
+          code: 'AUTH_REQUIRED',
+        }),
+        {
+          status: authResult.status,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    // 2. Parse and validate request body
     const body = await req.json();
     const parseResult = ChatApiRequestSchema.safeParse(body);
 
@@ -27,9 +43,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, model, systemInstructions, temperature, maxTokens } = parseResult.data;
+    const { messages, model, systemInstructions, temperature, maxTokens, mock } = parseResult.data;
 
-    // 2. Prepare context
+    // 3. Prepare context
     const preparedContext = buildAnthropicContext({
       messages,
       systemInstructions,
@@ -37,8 +53,10 @@ export async function POST(req: NextRequest) {
 
     const encoder = new TextEncoder();
 
-    // 3. Check for Mock AI Mode (Local testing or explicit mock setting)
-    if (isMockModeActive()) {
+    // 4. Check whether Mock AI Mode is explicitly requested
+    const isMock = isMockModeActive({ explicitMock: mock });
+
+    if (isMock) {
       const lastUserMsg = messages[messages.length - 1];
       const mockStream = createMockStream({
         userPrompt: lastUserMsg?.content || '',
@@ -90,7 +108,18 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 4. Live Anthropic Claude Streaming Integration
+    // 5. Real Claude Mode (No automatic mock fallback)
+    if (!isAnthropicConfigured()) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'Anthropic Claude API is not configured. Real Claude mode is active. Please configure ANTHROPIC_API_KEY in .env.local, or explicitly set MOCK_AI_MODE=true or USE_MOCK_AI=true for local mock testing.',
+          code: 'ANTHROPIC_NOT_CONFIGURED',
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const client = getAnthropicClient();
 
     const stream = await client.messages.stream({

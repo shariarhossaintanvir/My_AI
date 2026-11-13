@@ -20,7 +20,7 @@ describe('Mock AI Mode & Stream Tests', () => {
     ]);
 
     expect(response).toContain('Document Analysis: annual_report.pdf');
-    expect(response).toContain('Claude 3.5 native document input');
+    expect(response).toContain('Claude native document input');
   });
 
   it('streams mock response tokens progressively', async () => {
@@ -59,3 +59,4 @@ describe('Mock AI Mode & Stream Tests', () => {
     expect(count).toBeLessThanOrEqual(4);
   });
 });
+

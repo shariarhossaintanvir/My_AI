@@ -79,3 +79,4 @@ describe('Context Management & Anthropic Payload Builder', () => {
     expect(blocks.some((b) => b.type === 'image' && b.source?.media_type === 'image/png')).toBe(true);
   });
 });
+
