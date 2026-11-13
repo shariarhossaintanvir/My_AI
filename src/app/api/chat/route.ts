@@ -1,20 +1,18 @@
 // ==========================================
-// MY AI — Real-Time Streaming Chat Route Handler
+// MY AI — Claude Chat API Streaming Route
 // ==========================================
 
 import { NextRequest } from 'next/server';
 import { ChatApiRequestSchema } from '@/lib/validation/schemas';
-import { isMockModeActive, isAnthropicConfigured, getAnthropicClient } from '@/lib/anthropic/client';
-import { buildAnthropicContext } from '@/lib/anthropic/context';
-import { createMockStream } from '@/lib/anthropic/mock';
-import { verifyChatEndpointAuthorization } from '@/lib/security/auth';
+import { isAnthropicConfigured, getAnthropicClient, DEFAULT_MODEL } from '@/lib/anthropic/client';
+import { SYSTEM_PROMPT, buildAnthropicMessages } from '@/lib/anthropic/context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Parse and validate request body
+    // 1. Validate request payload
     const body = await req.json().catch(() => null);
     const parseResult = ChatApiRequestSchema.safeParse(body);
 
@@ -28,114 +26,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, model, systemInstructions, temperature, maxTokens, mock } = parseResult.data;
+    const { messages, model } = parseResult.data;
 
-    // 2. Determine if Mock AI Mode is explicitly requested (never enabled in production)
-    const isMock = isMockModeActive({ explicitMock: mock });
-
-    // 3. Verify authentication and authorization (fails closed for real Claude without verified owner)
-    const authResult = await verifyChatEndpointAuthorization(req, isMock);
-    if (!authResult.authorized) {
-      return new Response(
-        JSON.stringify({
-          error: authResult.error || 'Unauthorized',
-          code: authResult.code || 'AUTH_REQUIRED',
-        }),
-        {
-          status: authResult.status,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // 4. Prepare context
-    const preparedContext = buildAnthropicContext({
-      messages,
-      systemInstructions,
-    });
-
-    const encoder = new TextEncoder();
-
-    // 5. Explicit Development Mock Mode (Simulated responses, zero API cost)
-    if (isMock) {
-      const lastUserMsg = messages[messages.length - 1];
-      const mockStream = createMockStream({
-        userPrompt: lastUserMsg?.content || '',
-        attachments: lastUserMsg?.attachments,
-        model,
-        signal: req.signal,
-      });
-
-      const readableStream = new ReadableStream({
-        async start(controller) {
-          try {
-            for await (const chunk of mockStream) {
-              if (req.signal.aborted) {
-                break;
-              }
-              const sseEvent = `data: ${JSON.stringify({ type: 'delta', text: chunk })}\n\n`;
-              controller.enqueue(encoder.encode(sseEvent));
-            }
-
-            // Mock usage stats
-            const sseUsage = `data: ${JSON.stringify({
-              type: 'usage',
-              inputTokens: 120,
-              outputTokens: 380,
-            })}\n\n`;
-            controller.enqueue(encoder.encode(sseUsage));
-
-            const sseDone = `data: ${JSON.stringify({ type: 'done' })}\n\n`;
-            controller.enqueue(encoder.encode(sseDone));
-            controller.close();
-          } catch (err: any) {
-            const errEvent = `data: ${JSON.stringify({
-              type: 'error',
-              message: err.message || 'Stream generation failed',
-            })}\n\n`;
-            controller.enqueue(encoder.encode(errEvent));
-            controller.close();
-          }
-        },
-      });
-
-      return new Response(readableStream, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache, no-transform',
-          Connection: 'keep-alive',
-          'X-Accel-Buffering': 'no',
-        },
-      });
-    }
-
-    // 6. Real Claude Mode (Protected & Verified)
+    // 2. Verify Anthropic API key is configured
     if (!isAnthropicConfigured()) {
       return new Response(
         JSON.stringify({
-          error:
-            'Anthropic Claude API is not configured. Real Claude mode is active. Please configure ANTHROPIC_API_KEY in .env.local, or explicitly set USE_MOCK_AI=true for local mock testing.',
-          code: 'ANTHROPIC_NOT_CONFIGURED',
+          error: 'Anthropic Claude API key is not configured. Please set ANTHROPIC_API_KEY in C:\\My AI\\.env.local.',
+          code: 'ANTHROPIC_KEY_MISSING',
         }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
+    // 3. Initialize Anthropic client
     const client = getAnthropicClient();
+    const formattedMessages = buildAnthropicMessages(messages);
+    const selectedModel = model || DEFAULT_MODEL;
 
+    // 4. Request streaming completion from Anthropic Messages API
     const stream = await client.messages.stream({
-      model,
-      max_tokens: maxTokens,
-      temperature,
-      system: preparedContext.systemPrompt,
-      messages: preparedContext.messages,
+      model: selectedModel,
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: formattedMessages,
     });
 
+    const encoder = new TextEncoder();
+
+    // 5. Stream tokens back to the browser via SSE
     const readableStream = new ReadableStream({
       async start(controller) {
-        let inputTokens = 0;
-        let outputTokens = 0;
-
         try {
           for await (const event of stream) {
             if (req.signal.aborted) {
@@ -144,35 +65,19 @@ export async function POST(req: NextRequest) {
             }
 
             if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              const sseChunk = `data: ${JSON.stringify({
-                type: 'delta',
-                text: event.delta.text,
-              })}\n\n`;
-              controller.enqueue(encoder.encode(sseChunk));
-            } else if (event.type === 'message_delta' && event.usage) {
-              outputTokens = event.usage.output_tokens || 0;
-            } else if (event.type === 'message_start' && event.message?.usage) {
-              inputTokens = event.message.usage.input_tokens || 0;
+              const chunk = `data: ${JSON.stringify({ text: event.delta.text })}\n\n`;
+              controller.enqueue(encoder.encode(chunk));
             }
           }
 
-          // Emit final usage data
-          const sseUsage = `data: ${JSON.stringify({
-            type: 'usage',
-            inputTokens,
-            outputTokens,
-          })}\n\n`;
-          controller.enqueue(encoder.encode(sseUsage));
-
-          const sseDone = `data: ${JSON.stringify({ type: 'done' })}\n\n`;
-          controller.enqueue(encoder.encode(sseDone));
+          // Signal stream completion
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
           controller.close();
-        } catch (streamError: any) {
-          const sseError = `data: ${JSON.stringify({
-            type: 'error',
-            message: streamError.message || 'Error occurred during Claude generation',
+        } catch (streamErr: any) {
+          const errChunk = `data: ${JSON.stringify({
+            error: streamErr?.message || 'Error occurred during streaming response.',
           })}\n\n`;
-          controller.enqueue(encoder.encode(sseError));
+          controller.enqueue(encoder.encode(errChunk));
           controller.close();
         }
       },
@@ -180,7 +85,7 @@ export async function POST(req: NextRequest) {
         try {
           stream.abort();
         } catch {
-          // ignore
+          // Ignore cancellation errors
         }
       },
     });
@@ -190,24 +95,23 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
-        'X-Accel-Buffering': 'no',
       },
     });
   } catch (error: any) {
     console.error('Chat API Error:', error);
 
-    let errorMessage = 'An unexpected server error occurred.';
     let statusCode = 500;
+    let errorMessage = 'An unexpected server error occurred while contacting Claude.';
 
     if (error?.status === 401) {
-      errorMessage = 'Invalid Anthropic API Key. Please verify your ANTHROPIC_API_KEY environment variable.';
       statusCode = 401;
+      errorMessage = 'Invalid Anthropic API Key. Please verify your ANTHROPIC_API_KEY in .env.local.';
     } else if (error?.status === 429) {
-      errorMessage = 'Anthropic rate limit reached. Please wait a moment before sending another request.';
       statusCode = 429;
+      errorMessage = 'Anthropic rate limit reached. Please wait a moment and try again.';
     } else if (error?.status === 529) {
-      errorMessage = 'Anthropic Claude servers are currently overloaded. Please try again shortly.';
       statusCode = 503;
+      errorMessage = 'Anthropic Claude servers are currently overloaded. Please try again shortly.';
     } else if (error?.message) {
       errorMessage = error.message;
     }

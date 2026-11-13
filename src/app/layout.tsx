@@ -2,17 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'My AI — Private Personal AI Assistant',
-  description: 'Your private, secure personal AI assistant powered by Claude with real-time streaming, document analysis, and coding intelligence.',
-  manifest: '/manifest.json',
+  title: 'My AI — Claude Chatbot',
+  description: 'A simple, clean AI chatbot powered by Anthropic Claude.',
   icons: {
     icon: '/favicon.ico',
-    apple: '/icon-192.png',
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'My AI',
   },
 };
 
@@ -20,8 +13,6 @@ export const viewport: Viewport = {
   themeColor: '#101114',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 export default function RootLayout({
@@ -45,4 +36,3 @@ export default function RootLayout({
     </html>
   );
 }
-

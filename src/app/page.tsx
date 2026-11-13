@@ -1,10 +1,9 @@
-import { ChatContainer } from '@/components/chat/ChatContainer';
+import { ChatInterface } from '@/components/chat/ChatInterface';
 
 export default function HomePage() {
   return (
     <main className="h-screen w-screen overflow-hidden">
-      <ChatContainer />
+      <ChatInterface />
     </main>
   );
 }
-
